@@ -1,16 +1,31 @@
 import { SignupInput } from "@rishiraj13/medium-common";
 import { ChangeEvent, useState } from "react";
-import { Link } from "react-router-dom"
+import { Link,  useNavigate } from "react-router-dom"
+import { BACKEND_URL } from "../config";
+import axios from "axios";
 
 export const Auth = ({ type }: { type: "signup" | "signin" }) => {
-   
+    const navigate = useNavigate();
+
     const [postInputs, setPostInputs] = useState<SignupInput>({
         name: "",
         email: "",
         password: ""
     });
     
-    
+    async function sendRequest() {
+        try {
+            const response = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
+            const jwt = response.data;
+            
+            
+            localStorage.setItem("token", jwt);
+            navigate("/posts");
+        } catch(e) {
+            alert("Error while signing up")
+            // alert the user here that the request failed
+        }
+    }
     return <div className="h-screen flex justify-center flex-col">
         <div className="flex justify-center">
             <div>
@@ -32,7 +47,7 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
                             name: e.target.value
                         })
                     }} /> : null}
-                    <LabelledInput label="Username" placeholder="harkirat@gmail.com" onChange={(e) => {
+                    <LabelledInput label="Email" placeholder="harkirat@gmail.com" onChange={(e) => {
                         setPostInputs({
                             ...postInputs,
                             email: e.target.value
@@ -45,7 +60,7 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
                         })
                     }} /> 
                     <button
-                        // onClick={sendRequest}
+                        onClick={sendRequest}
                         type="button" className="mt-8 w-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">{type === "signup" ? "Sign up" : "Sign in"}</button>
                 </div>
             </div>

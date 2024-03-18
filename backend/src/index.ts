@@ -6,6 +6,7 @@ import { Hono } from 'hono'
 import { decode, sign, verify } from 'hono/jwt'
 import { userRouter } from './routes/user'
 import { postRouter } from './routes/post'
+import { cors } from 'hono/cors'
 
 const app = new Hono<{ 
   Bindings: {
@@ -16,6 +17,8 @@ const app = new Hono<{
 		userId: string
 	}
 }>()
+
+app.use("/*",cors())
 
 //Calling functions from user.ts
 app.route("/api/v1/user", userRouter)

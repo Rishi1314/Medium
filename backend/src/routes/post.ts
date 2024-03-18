@@ -15,25 +15,24 @@ export const postRouter = new Hono<{
 
 //Middleware to Authorize all actions.
 postRouter.use("/*", async (c, next) => {
-  const header = c.req.header("authorization") || "";
-  // const token = header.split(" ")[1]
-  if (!header) {
-    c.status(401);
-    return c.json({ error: "unauthorized" });
-  }
-  try {
-    const response = await verify(header, c.env.JWT_SECRET);
-  if (response) {
-    c.set("userId", response.id);
-    await next();
-  } else {
-    c.status(403);
-    return c.json({ error: "Unauthorized" });
-  }
-  } catch (error) {
-    c.status(403);
-    return c.json({ error: "Unauthorized" });
-  }
+  const authHeader = c.req.header("authorization") || "";
+    try {
+        const user = await verify(authHeader, c.env.JWT_SECRET);
+        if (user) {
+            c.set("userId", user.id);
+            await next();
+        } else {
+            c.status(403);
+            return c.json({
+                message: "You are not logged in"
+            })
+        }
+    } catch(e) {
+        c.status(403);
+        return c.json({
+            message: "You are not logged in"
+        })
+    }
 });
 
 //Creating Post
@@ -80,10 +79,22 @@ postRouter.put("/", async (c) => {
 //Retrieving all Posts
 postRouter.get("/bulk", async (c) => {
   const prisma = new PrismaClient({
-    datasourceUrl: c.env?.DATABASE_URL,
-  }).$extends(withAccelerate());
-  const posts = await prisma.post.findMany();
-  return c.json(posts);
+    datasourceUrl: c.env.DATABASE_URL,
+}).$extends(withAccelerate())
+const posts = await prisma.post.findMany({
+    select: {
+        content: true,
+        title: true,
+        id: true,
+        author: {
+            select: {
+                name: true
+            }
+        }
+    }
+});
+
+return c.json(posts)
 });
 
 //Getting a particular post
